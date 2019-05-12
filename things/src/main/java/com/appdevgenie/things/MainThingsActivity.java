@@ -52,7 +52,7 @@ public class MainThingsActivity extends AppCompatActivity {
 
     private static final String TAG = "nearbyLog";
     private static final String NEARBY_SERVICE_ID = "com.appdevgenie.pinearby";
-    private static final Strategy STRATEGY = Strategy.P2P_STAR;
+    private static final Strategy STRATEGY = Strategy.P2P_CLUSTER;
 
     //private GoogleApiClient googleApiClient;
     private ConnectionsClient connectionsClient;
@@ -144,8 +144,7 @@ public class MainThingsActivity extends AppCompatActivity {
 
             if (connectionResolution.getStatus().isSuccess()) {
                 Log.d(TAG, "onConnectionResult: connection successful");
-
-                connectionsClient.stopDiscovery();
+                //connectionsClient.stopAdvertising();
             } else {
                 Log.d(TAG, "onConnectionResult: connection failed");
             }
@@ -171,7 +170,8 @@ public class MainThingsActivity extends AppCompatActivity {
         @Override
         public void onDisconnected(@NonNull String endpointId) {
             Log.d(TAG, "onDisconnected: ");
-            tvInfo.setText("diconnected from mobile");
+            tvInfo.setText("disconnected from mobile");
+            //startAdvertising();
         }
     };
 

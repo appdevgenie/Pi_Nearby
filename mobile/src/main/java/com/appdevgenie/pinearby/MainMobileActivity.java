@@ -28,17 +28,20 @@ import com.google.android.gms.nearby.connection.Payload;
 import com.google.android.gms.nearby.connection.PayloadCallback;
 import com.google.android.gms.nearby.connection.PayloadTransferUpdate;
 import com.google.android.gms.nearby.connection.Strategy;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 
 import java.nio.charset.Charset;
+import java.util.Random;
 
 public class MainMobileActivity extends AppCompatActivity {
 
     private static final String TAG = "nearbyLog";
     private static final String NEARBY_SERVICE_ID = "com.appdevgenie.pinearby";
     private static final int REQUEST_CODE_REQUIRED_PERMISSIONS = 1;
-    private static final Strategy STRATEGY = Strategy.P2P_STAR;
+    private static final Strategy STRATEGY = Strategy.P2P_CLUSTER;
 
     private static final String[] REQUIRED_PERMISSIONS =
             new String[]{
@@ -47,6 +50,7 @@ public class MainMobileActivity extends AppCompatActivity {
                     Manifest.permission.ACCESS_WIFI_STATE,
                     Manifest.permission.CHANGE_WIFI_STATE,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION
             };
 
     private TextView tvNearbyLog;
@@ -57,6 +61,7 @@ public class MainMobileActivity extends AppCompatActivity {
     private ConnectionsClient connectionsClient;
     private String endpoint;
     private Context context;
+    private String randomNumber;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +84,9 @@ public class MainMobileActivity extends AppCompatActivity {
         tvNearbyLog.setText("initialised");
 
         etMessage = findViewById(R.id.etMessage);
+
+        Random random = new Random();
+        randomNumber = String.valueOf(random.nextInt(999) + 99);
 
         bSend = findViewById(R.id.bSend);
         bSend.setOnClickListener(new View.OnClickListener() {
@@ -182,10 +190,10 @@ public class MainMobileActivity extends AppCompatActivity {
             Nearby.getConnectionsClient(getApplicationContext()).acceptConnection(endPointId, payloadCallback);*/
 
                     endpoint = endPointId;
-                    Log.d(TAG, "onConnectionInitiated: accepting connection");
+                    Log.d(TAG, "onConnectionInitiated: accepting connection to " + endPointId);
                     connectionsClient.acceptConnection(endPointId, payloadCallback);
                     String connection = connectionInfo.getEndpointName();
-                    tvNearbyLog.setText(connection);
+                    tvNearbyLog.setText("connected to " + connection);
 
             /*Nearby.Connections.acceptConnection(googleApiClient, endPointId, payloadCallback);
             endpoint = endPointId;
@@ -197,7 +205,6 @@ public class MainMobileActivity extends AppCompatActivity {
 
                     if (connectionResolution.getStatus().isSuccess()) {
                         Log.d(TAG, "onConnectionResult: connection successful");
-
                         connectionsClient.stopDiscovery();
                     } else {
                         Log.d(TAG, "onConnectionResult: connection failed");
@@ -234,10 +241,11 @@ public class MainMobileActivity extends AppCompatActivity {
 
                 Log.d(TAG, "onEndpointFound: endpoint found, connecting to " + discoveredEndpointInfo.getEndpointName());
                 tvNearbyLog.setText("onEndpointFound: endpoint found, connecting to " + discoveredEndpointInfo.getEndpointName());
-                connectionsClient.requestConnection("mobile", endPointId, connectionLifecycleCallback)
+                connectionsClient.requestConnection("mobile" + randomNumber, endPointId, connectionLifecycleCallback)
                         .addOnSuccessListener(new OnSuccessListener<Void>() {
                             @Override
                             public void onSuccess(Void aVoid) {
+                                //tvNearbyLog.setText("onSuccess: EndpointDiscoveryCallback");
                                 Log.d(TAG, "onSuccess: EndpointDiscoveryCallback");
                             }
                         })
@@ -294,10 +302,19 @@ public class MainMobileActivity extends AppCompatActivity {
                 NEARBY_SERVICE_ID, endpointDiscoveryCallback,
                 new DiscoveryOptions.Builder().setStrategy(STRATEGY).build());*/
 
-        DiscoveryOptions discoveryOptions =
-                new DiscoveryOptions.Builder().setStrategy(STRATEGY).build();
+        DiscoveryOptions discoveryOptions = new DiscoveryOptions
+                        .Builder()
+                        .setStrategy(STRATEGY)
+                        .build();
         Nearby.getConnectionsClient(context)
                 .startDiscovery(NEARBY_SERVICE_ID, endpointDiscoveryCallback, discoveryOptions)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        Log.d(TAG, "onComplete: discovery");
+                        tvNearbyLog.setText("discovery complete");
+                    }
+                })
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void aVoid) {
